@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Completo de Análise de Dados Exploratória</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for Graphics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@sgratzl/chartjs-chart-boxplot/build/index.umd.min.js"></script>
+
+
+    <style>
+        /* CSS Reset and Variables */
+        :root {
+            --bg-dark: #121212; /* Darker background */
+            --card-dark: #1A1A1A;
+            --border-dark: #333333;
+            --text-primary: #f0f6fc;
+            --text-secondary: #adb9c7;
+            --text-muted: #7d8b99;
+            --accent-yellow: #FFD700; /* Yellow for titles */
+            --accent-gradient: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); /* Yellow gradient */
+            --accent-orange: #f97316;
+            --accent-blue: #3498db;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --chart-bg-light: #f0f0f0; /* Light gray for chart backgrounds */
+            --chart-text-dark: #111111; /* Black for chart text */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* General Styles */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        section {
+            padding: 3rem 0; /* Reduced padding */
+            position: relative;
+        }
+        
+        #home {
+             padding: 6rem 0; /* Keep home padding */
+        }
+
+        section:nth-child(even) {
+            background-color: #181818;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--accent-yellow); /* Changed to solid yellow */
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 1.5rem;
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-dark);
+            transition: top 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--accent-yellow);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem; /* Adjusted gap */
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-yellow);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-yellow);
+        }
+
+        .nav-links a:hover::after, .nav-links a.active::after {
+            width: 100%;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background-color: var(--text-primary);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        /* Home Section */
+        #home {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.05), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(52, 152, 219, 0.05), transparent 40%);
+        }
+        .hero-content {
+            max-width: 800px; /* Reduced max-width */
+        }
+        .hero-title {
+            font-size: clamp(2.5rem, 7vw, 4.2rem); /* Reduced font size */
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        .hero-title span {
+            color: var(--accent-yellow);
+        }
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.15rem); /* Reduced font size */
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-cta {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background-image: var(--accent-gradient);
+            background-size: 200% auto;
+            color: #111;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.2);
+        }
+        .hero-cta:hover {
+            background-position: right center;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px 0 rgba(255, 215, 0, 0.2);
+        }
+
+        /* Content Card Styles */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .card {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-yellow);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-yellow);
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+        .card-description {
+            color: var(--text-secondary);
+            flex-grow: 1;
+        }
+        .card-image {
+            width: 100%;
+            height: 250px;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            background-color: var(--card-dark); /* Changed back to dark */
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .card-image canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .card-image pre {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: left;
+            width: 100%;
+            overflow: auto;
+        }
+        
+        /* Specific Styles for Chart Cards */
+        .chart-card {
+            background-color: var(--card-dark); /* Keep card dark */
+        }
+        .chart-card .card-image {
+            background-color: var(--chart-bg-light); /* Make image area light */
+        }
+        /* Title and description will inherit white color from .card */
+        
+        .chart-card .card-image pre {
+            background-color: #e0e0e0; /* light background for pre */
+            color: var(--chart-text-dark); /* dark text for pre */
+        }
+        
+        /* Code Block Style */
+        .code-block {
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border-radius: 1rem;
+            border: 1px solid var(--border-dark);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .comment { color: #6a9955; font-style: italic; }
+        .code-block .string { color: #ce9178; }
+        .code-block .number { color: #b5cea8; }
+
+        /* Glossary Section */
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .glossary-item {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .glossary-header {
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        .glossary-header:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+        .glossary-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .glossary-icon {
+            transition: transform 0.3s ease;
+            color: var(--accent-yellow);
+        }
+        .glossary-item[open] .glossary-icon {
+            transform: rotate(180deg);
+        }
+        .glossary-content {
+            padding: 0 1.25rem 1.25rem;
+            color: var(--text-secondary);
+        }
+        .glossary-content strong {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        /* Quiz Section */
+        #quiz-container {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        #quiz-question {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .quiz-option {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .quiz-option:hover:not([disabled]) {
+            border-color: var(--accent-yellow);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .quiz-option.correct {
+            background-color: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .quiz-option.incorrect {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+        
+        #quiz-feedback {
+            margin-top: 1.5rem;
+            font-weight: 500;
+            min-height: 24px;
+        }
+        .quiz-button {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background-image: var(--accent-gradient);
+            background-size: 200% auto;
+            border: none;
+            border-radius: 12px;
+            color: #111;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.4s ease;
+        }
+        .quiz-button:hover {
+            background-position: right center;
+        }
+
+        #quiz-result {
+            margin-top: 2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        /* Contact Section */
+        #contato {
+            text-align: center;
+        }
+        .social-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .social-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1rem;
+            border: 1px solid transparent;
+        }
+        .social-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .linkedin { background-color: #0077b5; border-color: #0077b5; }
+        .github { background-color: #333; border-color: #333;}
+        .whatsapp { background-color: #25D366; border-color: #25D366;}
+        .portfolio { background-color: var(--card-dark); border-color: var(--border-dark); }
+
+
+        /* Animations on scroll */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .animate-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .nav-links { gap: 1rem; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: var(--bg-dark);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 2.5rem;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .nav-links.open {
+                transform: translateX(0);
+            }
+            .mobile-menu-toggle {
+                display: flex;
+            }
+            .mobile-menu-toggle.open span:nth-child(1) {
+                transform: rotate(45deg) translate(6px, 6px);
+            }
+            .mobile-menu-toggle.open span:nth-child(2) {
+                opacity: 0;
+            }
+            .mobile-menu-toggle.open span:nth-child(3) {
+                transform: rotate(-45deg) translate(6px, -6px);
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-content">
+            <a href="#home" class="nav-logo">Análise de Dados</a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#glossario">Glossário</a></li>
+                <li><a href="#conteudo-1">Distribuições</a></li>
+                <li><a href="#conteudo-2">Normal</a></li>
+                <li><a href="#conteudo-3">Dispersão</a></li>
+                <li><a href="#conteudo-4">Correlação</a></li>
+                <li><a href="#conteudo-5">Regressão</a></li>
+                <li><a href="#quiz">Quiz</a></li>
+                <li><a href="#contato">Contato</a></li>
+            </ul>
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Home Section -->
+    <section id="home">
+        <div class="container hero-content animate-on-scroll">
+            <h1 class="hero-title">Guia de Estudos de <span>Análise de Dados Exploratória</span></h1>
+            <p class="hero-subtitle">
+                Este guia interativo é um compilado de estudos sobre os conceitos fundamentais da Análise de Dados Exploratória. O objetivo é apresentar os principais tópicos, desde a representação de distribuições até a aplicação de modelos de regressão, de forma clara, prática e visual.
+            </p>
+            <a href="#glossario" class="hero-cta">Começar a Explorar</a>
+        </div>
+    </section>
+
+    <!-- Glossary Section -->
+    <section id="glossario">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">Glossário Interativo</h2>
+                <p class="section-description">Consulte rapidamente o significado dos termos mais importantes da Análise de Dados. Clique em um conceito para expandir e ver a definição.</p>
+            </div>
+            <div class="glossary-grid">
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Análise Exploratória (ADE)</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Processo inicial de análise para resumir as principais características de um dataset, frequentemente usando visualizações gráficas para encontrar padrões e anomalias.</div>
+                </details>
+                 <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Variável Categórica</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Classifica indivíduos em grupos. <strong>Nominal:</strong> categorias sem ordem (ex: Gênero). <strong>Ordinal:</strong> categorias com uma ordem lógica (ex: Escolaridade - fundamental, médio, superior).</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Variável Quantitativa</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Assume valores numéricos. <strong>Discreta:</strong> valores contáveis e finitos (ex: Nº de cilindros). <strong>Contínua:</strong> pode assumir qualquer valor em um intervalo (ex: Altura, Peso).</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Média, Mediana, Moda</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content"><strong>Média:</strong> a soma de todos os valores dividida pelo número de observações. Sensível a outliers. <strong>Mediana:</strong> o valor central de um conjunto de dados ordenado. Robusta a outliers. <strong>Moda:</strong> o valor que aparece com mais frequência.</div>
+                </details>
+                 <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Desvio-Padrão</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Medida de dispersão que indica o quão espalhados os dados estão em relação à média. Um desvio-padrão baixo indica que os pontos de dados tendem a estar próximos da média.</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Outlier</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Um ponto de dado que se distancia significativamente dos outros. Outliers podem distorcer a média, correlação e a reta de regressão.</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Distribuição Normal (Gaussiana)</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Uma distribuição de probabilidade simétrica em forma de sino, definida por sua média (μ) e desvio-padrão (σ). Muitos fenômenos naturais seguem este padrão.</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Diagrama de Dispersão</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Um gráfico que usa pontos para representar os valores de duas variáveis numéricas, revelando a força e a direção da relação entre elas.</div>
+                </details>
+                 <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Correlação (r)</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Uma medida numérica (de -1 a +1) que quantifica a força e a direção da relação *linear* entre duas variáveis. Próximo a 0 significa fraca, próximo a 1 ou -1 significa forte.</div>
+                </details>
+                 <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Regressão Linear</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Um método estatístico para modelar a relação entre uma variável dependente (y) e uma variável independente (x), ajustando uma linha reta aos dados.</div>
+                </details>
+                <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Variável Explicativa e Resposta</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">A <strong>Explicativa (x)</strong> é a variável que se acredita influenciar a outra. A <strong>Resposta (y)</strong> é a variável que é medida ou observada como resultado.</div>
+                </details>
+                 <details class="glossary-item animate-on-scroll">
+                    <summary class="glossary-header"><span class="glossary-title">Coeficiente de Determinação (R²)</span><i class="fas fa-chevron-down glossary-icon"></i></summary>
+                    <div class="glossary-content">Indica a porcentagem da variação na variável resposta (y) que pode ser explicada pelo modelo de regressão. Um R² de 0.80 significa que 80% da variação é explicada.</div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 1: Representação de Distribuições -->
+    <section id="conteudo-1">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">1. Representação de Distribuições</h2>
+                <p class="section-description">A base da análise de dados começa em como organizamos e visualizamos a informação. Aqui, exploramos os componentes fundamentais de um conjunto de dados e as formas de representá-los.</p>
+            </div>
+            <div class="card-grid">
+                <div class="card animate-on-scroll" style="transition-delay: 100ms;">
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <h3 class="card-title">Indivíduos e Variáveis</h3>
+                    <p class="card-description">Um conjunto de dados (dataset) é composto por <strong>indivíduos</strong> (os objetos descritos, ex: pessoas, produtos) e <strong>variáveis</strong> (as características desses indivíduos, ex: idade, preço).</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 200ms;">
+                    <div class="card-icon"><i class="fas fa-sitemap"></i></div>
+                    <h3 class="card-title">Tipos de Variáveis</h3>
+                    <p class="card-description">As variáveis podem ser <strong>Categóricas</strong> (classificam em grupos, ex: gênero) ou <strong>Quantitativas</strong> (valores numéricos, ex: altura). Entender essa diferença é crucial para escolher o gráfico certo.</p>
+                </div>
+                 <div class="card animate-on-scroll" style="transition-delay: 300ms;">
+                    <div class="card-icon"><i class="fas fa-calculator"></i></div>
+                    <h3 class="card-title">Medidas Numéricas</h3>
+                    <p class="card-description">Resumimos os dados com números. <strong>Medidas de centro</strong> (média, mediana) nos dizem onde os dados se concentram, e <strong>medidas de dispersão</strong> (desvio-padrão) nos dizem o quão espalhados eles estão.</p>
+                </div>
+            </div>
+
+            <div class="section-header animate-on-scroll" style="margin-top: 5rem; margin-bottom: 3rem;">
+                 <h3 class="section-title" style="font-size: 2.5rem;">10 Tipos de Gráficos Essenciais</h3>
+            </div>
+             <div class="card-grid">
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">1. Gráfico de Barras</h3><p class="card-description">Compara valores entre diferentes categorias. Ideal para dados categóricos.</p><div class="card-image"><canvas id="barChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">2. Gráfico de Linhas</h3><p class="card-description">Mostra tendências ou mudanças ao longo do tempo. Conecta uma série de pontos de dados.</p><div class="card-image"><canvas id="lineChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">3. Gráfico de Pizza</h3><p class="card-description">Exibe a proporção de cada categoria em relação a um todo. Melhor para poucas categorias.</p><div class="card-image"><canvas id="pieChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">4. Histograma</h3><p class="card-description">Representa a distribuição de frequência de dados quantitativos contínuos.</p><div class="card-image"><canvas id="histogramChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">5. Diagrama de Dispersão</h3><p class="card-description">Mostra a relação entre duas variáveis quantitativas. Ótimo para ver correlações.</p><div class="card-image"><canvas id="scatterChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">6. Boxplot</h3><p class="card-description">Resume a distribuição de dados através de cinco números (mínimo, Q1, mediana, Q3, máximo).</p><div class="card-image"><canvas id="boxplotChart"></canvas></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">7. Mapa de Calor</h3><p class="card-description">Usa cores para representar a magnitude dos dados em uma matriz, útil para visualizar correlações.</p><div class="card-image" id="heatmapContainer" style="padding: 0;"></div></div>
+                <div class="card animate-on-scroll chart-card"><h3 class="card-title">8. Gráfico de Área</h3><p class="card-description">Similar ao gráfico de linhas, mas com a área abaixo da linha preenchida para indicar volume.</p><div class="card-image"><canvas id="areaChart"></canvas></div></div>
+                 <div class="card animate-on-scroll chart-card"><h3 class="card-title">9. Gráfico de Bolhas</h3><p class="card-description">Um diagrama de dispersão que adiciona uma terceira dimensão: o tamanho da bolha.</p><div class="card-image"><canvas id="bubbleChart"></canvas></div></div>
+                 <div class="card animate-on-scroll chart-card"><h3 class="card-title">10. Ramo e Folhas</h3><p class="card-description">Apresenta dados quantitativos de forma a manter os valores individuais, similar a um histograma.</p><div class="card-image"><pre>
+2 | 2 5
+3 | 6 8 6 8
+4 | 0 6 8 6
+5 | 2 5 5 5 8
+6 | 1 7 8
+7 | 2
+8 | 
+9 | 1
+                </pre></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Distribuições Normais -->
+    <section id="conteudo-2">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">2. As Distribuições Normais</h2>
+                <p class="section-description">Muitos fenômenos no mundo real seguem um padrão previsível conhecido como Distribuição Normal. Entender este conceito é fundamental para a estatística inferencial.</p>
+            </div>
+            <div class="card-grid">
+                <div class="card animate-on-scroll" style="transition-delay: 100ms;">
+                    <div class="card-icon"><i class="fas fa-bell"></i></div>
+                    <h3 class="card-title">A Curva em Forma de Sino</h3>
+                    <p class="card-description">A Distribuição Normal, ou Curva de Gauss, é simétrica e tem um formato de sino. Ela é completamente definida por sua <strong>média (μ)</strong> e seu <strong>desvio-padrão (σ)</strong>.</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 200ms;">
+                    <div class="card-icon"><i class="fas fa-ruler-combined"></i></div>
+                    <h3 class="card-title">A Regra 68-95-99,7</h3>
+                    <p class="card-description">Esta regra empírica nos diz que, em uma distribuição normal, aproximadamente 68% dos dados estão a 1 desvio-padrão da média, 95% a 2 desvios-padrão, e 99,7% a 3 desvios-padrão.</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 300ms;">
+                    <div class="card-icon"><i class="fas fa-flask-vial"></i></div>
+                    <h3 class="card-title">Escore-Z (Padronização)</h3>
+                    <p class="card-description">O Escore-Z nos diz a quantos desvios-padrão um ponto de dado está da média. Isso nos permite comparar valores de diferentes distribuições e calcular probabilidades.</p>
+                    <pre class="code-block"><code class="language-js"><span class="comment">// Exemplo: Nota de um aluno</span>
+let nota = 7;
+let mediaTurma = 5;
+let desvioPadrao = 2;
+let z = (nota - mediaTurma) / desvioPadrao;
+<span class="comment">// z = 1.0. A nota está 1 desvio-padrão acima da média.</span></code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Diagramas de Dispersão -->
+    <section id="conteudo-3">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">3. Diagramas de Dispersão</h2>
+                <p class="section-description">Como podemos visualizar a relação entre duas variáveis quantitativas? O diagrama de dispersão é a nossa principal ferramenta para investigar associações e padrões.</p>
+            </div>
+             <div class="card-grid">
+                <div class="card animate-on-scroll" style="transition-delay: 100ms;">
+                    <div class="card-icon"><i class="fas fa-project-diagram"></i></div>
+                    <h3 class="card-title">Explicativa vs. Resposta</h3>
+                    <p class="card-description">Em uma análise, a <strong>variável explicativa (x)</strong> é aquela que pensamos que influencia a <strong>variável resposta (y)</strong>. Por exemplo, horas de estudo (x) podem influenciar a nota na prova (y).</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 200ms;">
+                    <div class="card-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                    <h3 class="card-title">Associação e Direção</h3>
+                    <p class="card-description">A associação pode ser <strong>positiva</strong> (quando x sobe, y também sobe) ou <strong>negativa</strong> (quando x sobe, y desce). A força da associação depende de quão próximos os pontos estão de uma linha imaginária.</p>
+                </div>
+                 <div class="card animate-on-scroll" style="transition-delay: 300ms;">
+                    <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 class="card-title">Cuidado: Associação ≠ Causa</h3>
+                    <p class="card-description">É crucial lembrar que uma associação forte não prova uma relação de causa e efeito. Muitas vezes, uma terceira <strong>variável oculta</strong> pode estar influenciando ambas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Correlação -->
+    <section id="conteudo-4">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">4. Correlação</h2>
+                <p class="section-description">O coeficiente de correlação (r) nos dá um número exato para medir a força e a direção de uma relação *linear* entre duas variáveis quantitativas.</p>
+            </div>
+            <div class="card-grid">
+                <div class="card animate-on-scroll" style="transition-delay: 100ms;">
+                    <div class="card-icon"><i class="fas fa-signature"></i></div>
+                    <h3 class="card-title">O Coeficiente (r)</h3>
+                    <p class="card-description">O valor de 'r' varia de -1 a +1. <br>
+                    • <strong>r = +1:</strong> Correlação linear positiva perfeita. <br>
+                    • <strong>r = -1:</strong> Correlação linear negativa perfeita. <br>
+                    • <strong>r = 0:</strong> Nenhuma correlação linear.</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 200ms;">
+                    <div class="card-icon"><i class="fas fa-ruler-horizontal"></i></div>
+                    <h3 class="card-title">Propriedades de 'r'</h3>
+                    <p class="card-description">A correlação não tem unidade de medida e não muda se trocarmos os eixos x e y. Ela é fortemente afetada por outliers e mede apenas a força de relações *lineares*.</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 300ms;">
+                    <div class="card-icon"><i class="fas fa-th"></i></div>
+                    <h3 class="card-title">Quarteto de Anscombe</h3>
+                    <p class="card-description">Este famoso exemplo mostra quatro conjuntos de dados com estatísticas idênticas (média, desvio-padrão, correlação), mas com gráficos totalmente diferentes. Isso prova que <strong>sempre devemos visualizar nossos dados</strong>!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Section 5: Regressão Linear -->
+    <section id="conteudo-5">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">5. Regressão Linear</h2>
+                <p class="section-description">Se a correlação nos diz "se" existe uma relação linear, a regressão nos diz "qual" é essa relação, permitindo-nos criar um modelo para fazer previsões.</p>
+            </div>
+            <div class="card-grid">
+                 <div class="card animate-on-scroll" style="transition-delay: 100ms;">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="card-title">A Reta de Melhor Ajuste</h3>
+                    <p class="card-description">A regressão linear encontra a única linha reta que melhor se ajusta aos dados. A equação dessa reta é <strong>ŷ = a + bx</strong>, onde 'b' é a inclinação e 'a' é o intercepto.</p>
+                </div>
+                <div class="card animate-on-scroll" style="transition-delay: 200ms;">
+                    <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3 class="card-title">Método dos Mínimos Quadrados</h3>
+                    <p class="card-description">Este é o método matemático usado para encontrar a reta de regressão. Ele funciona minimizando a soma dos quadrados dos erros (as distâncias verticais entre cada ponto e a reta).</p>
+                </div>
+                 <div class="card animate-on-scroll" style="transition-delay: 300ms;">
+                    <div class="card-icon"><i class="fas fa-square-root-alt"></i></div>
+                    <h3 class="card-title">Coeficiente de Determinação (R²)</h3>
+                    <p class="card-description">R² nos diz qual porcentagem da variação na variável resposta (y) pode ser explicada pela variável explicativa (x). Um R² de 0.85 significa que 85% da variação é explicada pelo modelo.</p>
+                </div>
+                 <div class="card animate-on-scroll" style="transition-delay: 400ms;">
+                    <div class="card-icon"><i class="fas fa-magic"></i></div>
+                    <h3 class="card-title">Fazendo Previsões</h3>
+                    <p class="card-description">Uma vez que temos a equação da reta, podemos usá-la para prever o valor de 'y' para um novo valor de 'x'.</p>
+                    <pre class="code-block"><code class="language-js"><span class="comment">// Ex: Vendas de sorvete = -159.47 + 30.08 * Temperatura</span>
+let temperatura = 25; <span class="comment">// Prever vendas para 25°C</span>
+let vendasEstimadas = -159.47 + 30.08 * temperatura;
+<span class="comment">// vendasEstimadas ≈ R$ 592,53</span></code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">Teste seu Conhecimento</h2>
+                <p class="section-description">Hora de verificar o que você aprendeu! Responda às perguntas abaixo para solidificar os conceitos.</p>
+            </div>
+            <div id="quiz-container" class="animate-on-scroll">
+                <div id="quiz-question-container">
+                    <p id="quiz-question"></p>
+                    <div id="quiz-options"></div>
+                </div>
+                <p id="quiz-feedback"></p>
+                <button id="quiz-next-button" class="quiz-button" style="display: none;">Próxima Pergunta</button>
+                <div id="quiz-result" style="display: none;"></div>
+                <button id="quiz-restart-button" class="quiz-button" style="display: none;">Recomeçar Quiz</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section id="contato">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2 class="section-title">Contato</h2>
+                <p class="section-description">Gostou do projeto ou quer trocar uma ideia sobre dados, IA e tecnologia? Ficarei feliz em conectar. Você pode me encontrar nas seguintes plataformas:</p>
+            </div>
+            <div class="social-buttons animate-on-scroll">
+                <a href="https://www.linkedin.com/in/leandro-andrade-oliveira/" target="_blank" class="social-button linkedin">
+                    <i class="fab fa-linkedin"></i> LinkedIn
+                </a>
+                <a href="https://github.com/leanttro" target="_blank" class="social-button github">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+                <a href="https://wa.me/5511913324827" target="_blank" class="social-button whatsapp">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+                 <a href="https://leanttro.github.io/portfolio/" target="_blank" class="social-button portfolio">
+                    <i class="fas fa-briefcase"></i> Portfólio
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Navigation Logic ---
+            const navbar = document.getElementById('navbar');
+            const navLinksContainer = document.getElementById('nav-links');
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const navLinks = navLinksContainer.querySelectorAll('a');
+            const sections = document.querySelectorAll('section');
+            let lastScrollTop = 0;
+
+            // Mobile menu toggle
+            mobileMenuToggle.addEventListener('click', () => {
+                navLinksContainer.classList.toggle('open');
+                mobileMenuToggle.classList.toggle('open');
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                     navLinksContainer.classList.remove('open');
+                     mobileMenuToggle.classList.remove('open');
+                });
+            });
+
+            // Navbar hide on scroll down
+            window.addEventListener('scroll', () => {
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                if (scrollTop > lastScrollTop && scrollTop > navbar.offsetHeight) {
+                    navbar.style.top = '-80px';
+                } else {
+                    navbar.style.top = '0';
+                }
+                lastScrollTop = scrollTop;
+
+                // Active nav link on scroll
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+
+            // --- Animate on Scroll Logic ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.animate-on-scroll').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // --- Initialize Charts ---
+            function initializeCharts() {
+                const chartColors = {
+                    orange: 'rgba(249, 115, 22, 0.8)',
+                    blue: 'rgba(52, 152, 219, 0.8)',
+                    green: 'rgba(16, 185, 129, 0.8)',
+                    purple: 'rgba(139, 92, 246, 0.8)',
+                    pink: 'rgba(236, 72, 153, 0.8)',
+                    yellow: 'rgba(255, 215, 0, 0.8)',
+                    orange_bg: 'rgba(249, 115, 22, 0.2)',
+                    blue_bg: 'rgba(52, 152, 219, 0.2)',
+                    purple_bg: 'rgba(139, 92, 246, 0.2)'
+                };
+                
+                const lightChartOptions = {
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            labels: { 
+                                color: 'var(--chart-text-dark)' 
+                            }
+                        } 
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                color: 'var(--chart-text-dark)' 
+                            },
+                            grid: { 
+                                color: 'rgba(0, 0, 0, 0.1)' 
+                            }
+                        },
+                        y: { 
+                            ticks: { 
+                                color: 'var(--chart-text-dark)' 
+                            },
+                            grid: { 
+                                color: 'rgba(0, 0, 0, 0.1)' 
+                            }
+                        }
+                    }
+                };
+
+                const lightPieOptions = { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                color: 'var(--chart-text-dark)' 
+                            } 
+                        } 
+                    }
+                };
+
+                // 1. Bar Chart
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Produto A', 'Produto B', 'Produto C', 'Produto D'],
+                        datasets: [{
+                            label: 'Vendas',
+                            data: [120, 190, 150, 170],
+                            backgroundColor: [chartColors.orange, chartColors.blue, chartColors.purple, chartColors.green],
+                            borderColor: [chartColors.orange, chartColors.blue, chartColors.purple, chartColors.green],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+
+                // 2. Line Chart
+                new Chart(document.getElementById('lineChart'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'],
+                        datasets: [{
+                            label: 'Receita Mensal',
+                            data: [1200, 1500, 1300, 1800, 1600],
+                            borderColor: chartColors.blue,
+                            tension: 0.3,
+                            fill: false
+                        }]
+                    },
+                     options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+
+                // 3. Pie Chart
+                new Chart(document.getElementById('pieChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Desktop', 'Mobile', 'Tablet'],
+                        datasets: [{
+                            data: [55, 35, 10],
+                            backgroundColor: [chartColors.blue, chartColors.orange, chartColors.green],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: lightPieOptions
+                });
+                
+                // 4. Histogram (simulated with Bar Chart)
+                new Chart(document.getElementById('histogramChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60'],
+                        datasets: [{
+                            label: 'Frequência de Idade',
+                            data: [5, 15, 22, 18, 12, 6],
+                            backgroundColor: chartColors.blue,
+                            borderColor: chartColors.blue,
+                            borderWidth: 1,
+                            barPercentage: 1,
+                            categoryPercentage: 1
+                        }]
+                    },
+                    options: { ...lightChartOptions, plugins: {legend: {display: false}}, scales: { x: { ...lightChartOptions.scales.x, grid: { display: false } } } }
+                });
+
+                // 5. Scatter Chart
+                 new Chart(document.getElementById('scatterChart'), {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Altura vs Peso',
+                            data: [{x: 160, y: 62}, {x: 165, y: 68}, {x: 170, y: 75}, {x: 175, y: 72}, {x: 180, y: 85}, {x: 185, y: 88}],
+                            backgroundColor: chartColors.orange
+                        }]
+                    },
+                     options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+
+                // 6. Boxplot (using @sgratzl/chartjs-chart-boxplot)
+                const data = Array.from({length: 50}, () => Math.random() * 40 + 50);
+                new Chart(document.getElementById('boxplotChart'), {
+                    type: 'boxplot',
+                    data: {
+                        labels: ['Dataset 1'],
+                        datasets: [{
+                            label: 'Distribuição de Amostra',
+                            data: [data],
+                            backgroundColor: chartColors.purple_bg,
+                            borderColor: chartColors.purple,
+                            borderWidth: 1,
+                        }]
+                    },
+                    options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+
+                // 7. Heatmap (HTML divs)
+                 const heatmapContainer = document.getElementById('heatmapContainer');
+                 let heatmapHTML = '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; width: 100%; height: 100%;">';
+                 for (let i = 0; i < 35; i++) {
+                     const opacity = Math.random() * 0.8 + 0.1;
+                     heatmapHTML += `<div style="background-color: rgba(52, 152, 219, ${opacity}); border-radius: 3px;"></div>`;
+                 }
+                 heatmapHTML += '</div>';
+                 heatmapContainer.innerHTML = heatmapHTML;
+
+
+                // 8. Area Chart
+                new Chart(document.getElementById('areaChart'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                        datasets: [{
+                            label: 'Downloads',
+                            data: [30, 45, 40, 60],
+                            borderColor: chartColors.green,
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                     options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+
+                // 9. Bubble Chart
+                new Chart(document.getElementById('bubbleChart'), {
+                    type: 'bubble',
+                    data: {
+                        datasets: [{
+                            label: 'Produto (Custo, Vendas, Lucro)',
+                            data: [
+                                {x: 20, y: 30, r: 15}, {x: 40, y: 10, r: 8}, 
+                                {x: 30, y: 25, r: 12}, {x: 15, y: 15, r: 6}
+                            ],
+                            backgroundColor: chartColors.pink
+                        }]
+                    },
+                     options: {...lightChartOptions, plugins: {legend: {display: false}}}
+                });
+            }
+
+            initializeCharts();
+
+
+            // --- Quiz Logic ---
+            const quizQuestionEl = document.getElementById('quiz-question');
+            const quizOptionsEl = document.getElementById('quiz-options');
+            const quizFeedbackEl = document.getElementById('quiz-feedback');
+            const quizNextButton = document.getElementById('quiz-next-button');
+            const quizResultEl = document.getElementById('quiz-result');
+            const quizRestartButton = document.getElementById('quiz-restart-button');
+            
+            const allQuestions = [
+                { question: "Qual gráfico é mais adequado para visualizar a distribuição de uma variável quantitativa?", options: ["Gráfico de Pizza", "Gráfico de Barras", "Histograma", "Gráfico de Linhas"], answer: "Histograma" },
+                { question: "O que a Mediana representa em um conjunto de dados?", options: ["O valor mais frequente", "A média dos valores", "O valor central que divide os dados em duas metades", "A diferença entre o maior e menor valor"], answer: "O valor central que divide os dados em duas metades" },
+                { question: "Em uma Distribuição Normal, qual percentual dos dados está a aproximadamente 1 desvio-padrão da média?", options: ["50%", "68%", "95%", "99.7%"], answer: "68%" },
+                { question: "O que um Escore-Z de -2.0 significa?", options: ["O dado está 2 pontos abaixo da média", "O dado está 2 desvios-padrão acima da média", "O dado é inválido", "O dado está 2 desvios-padrão abaixo da média"], answer: "O dado está 2 desvios-padrão abaixo da média" },
+                { question: "Se o preço de um produto sobe e suas vendas caem, que tipo de associação é essa?", options: ["Positiva", "Negativa", "Nenhuma", "Causal"], answer: "Negativa" },
+                { question: "Um coeficiente de correlação (r) de +0.9 indica o quê?", options: ["Uma correlação negativa fraca", "Uma correlação positiva forte", "Nenhuma correlação", "Uma correlação negativa forte"], answer: "Uma correlação positiva forte" },
+                { question: "Qual é a principal lição do Quarteto de Anscombe?", options: ["Que a média é a medida mais importante", "Que a correlação sempre implica causalidade", "A importância de sempre visualizar os dados", "Que outliers não afetam a análise"], answer: "A importância de sempre visualizar os dados" },
+                { question: "Na equação de regressão ŷ = a + bx, o que 'b' representa?", options: ["O intercepto", "O erro do modelo", "A correlação", "A inclinação da reta"], answer: "A inclinação da reta" },
+                { question: "O que o coeficiente de determinação (R²) de 0.75 significa?", options: ["75% das previsões do modelo estão corretas", "A correlação é de 0.75", "75% da variação na variável resposta é explicada pela variável explicativa", "O modelo tem 75% de chance de estar errado"], answer: "75% da variação na variável resposta é explicada pela variável explicativa" },
+                { question: "Qual método é usado para encontrar a reta de melhor ajuste na regressão linear?", options: ["Método da Máxima Verossimilhança", "Método dos Mínimos Quadrados", "Método da Média Móvel", "Método de Monte Carlo"], answer: "Método dos Mínimos Quadrados" },
+                { question: "Qual das seguintes é uma variável categórica?", options: ["Idade", "Altura", "Salário", "Estado Civil"], answer: "Estado Civil" },
+                { question: "Um outlier pode afetar drasticamente qual das seguintes medidas?", options: ["A Mediana", "A Média", "A Moda", "O 1º Quartil"], answer: "A Média" },
+                { question: "Se um gráfico de dispersão mostra pontos formando uma curva em 'U', qual seria a correlação linear (r)?", options: ["Próxima de +1", "Próxima de -1", "Próxima de 0", "Impossível determinar"], answer: "Próxima de 0" },
+                { question: "Qual o objetivo da Análise de Dados Exploratória (ADE)?", options: ["Provar hipóteses com certeza", "Criar o modelo de machine learning final", "Resumir e investigar as principais características de um dataset", "Apenas limpar os dados"], answer: "Resumir e investigar as principais características de um dataset" },
+                { question: "Se a média, a mediana e a moda de uma distribuição são iguais, o que podemos dizer sobre sua forma?", options: ["É assimétrica à direita", "É assimétrica à esquerda", "É bimodal", "É provavelmente simétrica"], answer: "É provavelmente simétrica" }
+            ];
+
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let questions = [];
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function startQuiz() {
+                score = 0;
+                currentQuestionIndex = 0;
+                questions = [...allQuestions];
+                shuffleArray(questions);
+                quizResultEl.style.display = 'none';
+                quizRestartButton.style.display = 'none';
+                quizNextButton.style.display = 'none';
+                quizFeedbackEl.textContent = '';
+                showQuestion();
+            }
+
+            function showQuestion() {
+                const questionData = questions[currentQuestionIndex];
+                quizQuestionEl.textContent = `(${currentQuestionIndex + 1}/${questions.length}) ${questionData.question}`;
+                quizOptionsEl.innerHTML = '';
+                quizOptionsEl.style.display = 'flex';
+
+                const shuffledOptions = [...questionData.options];
+                shuffleArray(shuffledOptions);
+
+                shuffledOptions.forEach(optionText => {
+                    const button = document.createElement('button');
+                    button.classList.add('quiz-option');
+                    button.textContent = optionText;
+                    button.onclick = () => checkAnswer(optionText, questionData.answer);
+                    quizOptionsEl.appendChild(button);
+                });
+            }
+
+            function checkAnswer(selectedOption, correctAnswer) {
+                const optionsButtons = quizOptionsEl.querySelectorAll('.quiz-option');
+                optionsButtons.forEach(button => {
+                    button.disabled = true;
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    } else if (button.textContent === selectedOption) {
+                        button.classList.add('incorrect');
+                    }
+                });
+
+                if (selectedOption === correctAnswer) {
+                    score++;
+                    quizFeedbackEl.textContent = "Correto! 🎉";
+                    quizFeedbackEl.style.color = 'var(--accent-green)';
+                } else {
+                    quizFeedbackEl.textContent = `Incorreto. A resposta correta é: ${correctAnswer}`;
+                    quizFeedbackEl.style.color = 'var(--accent-red)';
+                }
+
+                quizNextButton.style.display = 'inline-block';
+            }
+            
+            function showResults() {
+                quizQuestionEl.textContent = 'Quiz Finalizado!';
+                quizOptionsEl.style.display = 'none';
+                quizFeedbackEl.textContent = '';
+                quizNextButton.style.display = 'none';
+                quizResultEl.style.display = 'block';
+                quizRestartButton.style.display = 'inline-block';
+
+                const percentage = (score / questions.length) * 100;
+                quizResultEl.textContent = `Você acertou ${score} de ${questions.length} perguntas! (${percentage.toFixed(0)}%)`;
+            }
+
+            quizNextButton.addEventListener('click', () => {
+                currentQuestionIndex++;
+                quizFeedbackEl.textContent = '';
+                quizNextButton.style.display = 'none';
+                if (currentQuestionIndex < questions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            });
+            
+            quizRestartButton.addEventListener('click', startQuiz);
+            
+            // Initial quiz start
+            startQuiz();
+        });
+    </script>
+
+</body>
+</html>
+
